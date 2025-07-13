@@ -29,64 +29,108 @@ public_users.post("/register", (req,res) => {
       return res.status(404).json({message: "password not provided."});
 });
 
+function getAllBooks() {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (books) {
+                resolve(books);
+            } else {
+                reject({ message: "No books available" });
+            }
+        }, 1000); 
+    });
+}
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
+public_users.get('/',async function (req, res) {
   //Write your code here
-  if (books) {
-    res.send(JSON.stringify(books,null,4));
-} else {
+  try{
+    const allTheBooks = await getAllBooks();
+    res.send(JSON.stringify(allTheBooks,null,4));
+} catch(error) {
     return res.status(404).json({message: "No books available"});
 }
 });
 
+function getBookByIsbn(isbn) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const book = books[isbn] || null;
+            resolve(book);
+        }, 500); 
+    });
+}
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
+public_users.get('/isbn/:isbn',async function (req, res) {
   //Write your code here
   const isbn = req.params.isbn;
-  const book = books[isbn] || null;
-  if(book){
+  
+  try{
+    const book = await getBookByIsbn(isbn);
     res.send(JSON.stringify(book,null,4));
   }
-  else{
+  catch (error){
     return res.status(404).json({message: "book not found"});
   }
  });
-  
+
+ function getBooksByAuthor(author) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            let foundBooks = [];
+            for (let key in books) {
+                if (books[key].author === author) {
+                    foundBooks.push(books[key]);
+                }
+            }
+            resolve(foundBooks);
+        }, 500); 
+    });
+}
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
+public_users.get('/author/:author',async function (req, res) {
   //Write your code here
   const author = req.params.author;
-  let book =[];
-  for (let key in books) {
-    if (books[key].author === author) {
-        book.push(books[key]);
+  try {
+        const foundBooks = await getBooksByAuthor(author);
+        if (foundBooks.length > 0) {
+            res.status(200).json(foundBooks);
+        } else {
+            res.status(404).json({ message: "Books not found" });
+        }
+    } 
+    catch (error) {
+        res.status(500).json({ message: error.message});
     }
-  }  
-  if(book.length > 0){
-    res.send(JSON.stringify(book,null,4));
-  }
-  else{
-    return res.status(404).json({message: "book not found"});
-  }
 
 });
-
+function getBooksByTitle(title) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            let foundBooks = [];
+            for (let key in books) {
+                if (books[key].title === title) {
+                    foundBooks.push(books[key]);
+                }
+            }
+            resolve(foundBooks);
+        }, 500); 
+    });
+}
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
+public_users.get('/title/:title',async function (req, res) {
   //Write your code here
   const title = req.params.title;
-  let book =[];
-  for (let key in books) {
-    if (books[key].title === title) {
-        book.push(books[key]);
+  try {
+    const foundBooks = await getBooksByTitle(title);
+    if (foundBooks.length > 0) {
+        res.status(200).json(foundBooks);
+    } else {
+        res.status(404).json({ message: "Books not found" });
     }
-  }  
-  if(book.length > 0){
-    res.send(JSON.stringify(book,null,4));
-  }
-  else{
-    return res.status(404).json({message: "book not found"});
-  }
+} 
+catch (error) {
+    res.status(500).json({ message: error.message});
+}
 });
 
 //  Get book review
